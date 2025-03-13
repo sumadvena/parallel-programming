@@ -1,0 +1,3 @@
+BasedOnStyle: Mozilla
+Language: Cpp
+IndentWidth: 4
