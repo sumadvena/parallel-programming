@@ -1,3 +1,2 @@
 build:
-	gcc -o rw main.c -fopenmp -Wall -pedantic -std=c2x
 	gcc -o rw2 main2.c -fopenmp -Wall -pedantic -std=c2x

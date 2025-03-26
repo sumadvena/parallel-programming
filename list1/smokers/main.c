@@ -1,94 +1,90 @@
 #include <omp.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 
-#define Ksmokers 5
-#define Lmortars 3
-#define Mignitors 2
+#define K 5
+#define L 3
+#define M 2
 
-/*const int SMOKERS = K;*/
-/*const int MORTARS = L;*/
-/*const int IGNITORS = M;*/
+const int SMOKERS_NUM = K;
+const int MORTARS_NUM = L;
+const int IGNITORS_NUM = M;
 
 void
 init_locks(omp_lock_t* lock, const int number)
 {
 #pragma omp parallel for num_threads(number)
-    for (int i = 0; i < number; i++) {
-        omp_init_lock(&lock[i]);
-    }
+  for (int i = 0; i < number; i++) {
+    omp_init_lock(&lock[i]);
+  }
 }
 
 void
 destroy_locks(omp_lock_t* lock, const int number)
 {
 #pragma omp parallel for num_threads(number)
-    for (int i = 0; i < number; i++) {
-        omp_destroy_lock(&lock[i]);
-    }
+  for (int i = 0; i < number; i++) {
+    omp_destroy_lock(&lock[i]);
+  }
 }
 
-int
+omp_lock_t*
 aquire(omp_lock_t* lock, const int number)
 {
-    int free_lock = -1;
 
-    #pragma omp parallel for private(free_lock)
-    for (int i = 0; i < number; i++) {
-        /*printf("searching for a free lock...\n");*/
-        if (!omp_test_lock(&lock[i])) {
-            /*printf("lock found at %d\n", i);*/
-            #pragma omp atomic write
-            free_lock = i;
-        }
+  for (int i = 0; i < number; i++) {
+    if (omp_test_lock(&lock[i])) {
+      return &lock[i];
     }
+  }
 
-    /*printf("could not aquire any lock\n");*/
-    // could not aquire a lock
-    return free_lock;
+  // could not aquire a lock
+  return NULL;
 }
 
 int
 main(int argc, char** argv)
 {
-    omp_lock_t lmortars[Lmortars], lignitors[Mignitors];
-    init_locks(lmortars, Lmortars);
-    init_locks(lignitors, Mignitors);
-    bool used_mortar = false, ignited = false;
+  omp_lock_t lmortars[MORTARS_NUM], lignitors[IGNITORS_NUM];
+  init_locks(lmortars, MORTARS_NUM);
+  init_locks(lignitors, IGNITORS_NUM);
+  bool used_mortar = false, ignited = false;
 
-#pragma omp parallel for num_threads(Ksmokers) private(used_mortar, ignited)
-    for (int i = 0; i < 100; i++) {
-        int smoker = omp_get_thread_num();
-        int free_mortar_lock = aquire(lmortars, Lmortars);
-        if (free_mortar_lock != -1) {
-            omp_set_lock(&lmortars[free_mortar_lock]);
-            printf("%d aquired a %d. mortar and uses it\n",
-                   smoker,
-                   free_mortar_lock);
-            /*sleep(1); // does thing*/
-            omp_unset_lock(&lmortars[free_mortar_lock]);
-            used_mortar = true;
-        }
-        int free_ignitor_lock = aquire(lignitors, Mignitors);
-        if (free_mortar_lock != -1 && used_mortar) {
-            omp_set_lock(&lignitors[free_ignitor_lock]);
-            printf("%d aquired a %d. mortar and uses it\n",
-                   smoker,
-                   free_ignitor_lock);
-            /*sleep(1); // ignites*/
-            omp_unset_lock(&lignitors[free_ignitor_lock]);
-            ignited = true;
-        }
-        if (used_mortar && ignited) {
-#pragma omp critical
-            {
-                printf("\t\t%d smokes...\n", smoker);
-                sleep(1); // smokes
-            }
-        }
+#pragma omp parallel for num_threads(SMOKERS_NUM) private(used_mortar, ignited)
+  for (int i = 0; i < 50; i++) {
+    int smoker = omp_get_thread_num();
+    omp_lock_t* mortar_lock = aquire(lmortars, MORTARS_NUM);
+    if (mortar_lock == NULL) {
+      printf("%d could not acquire a mortar lock\n", smoker);
+      sleep(2);
+      continue; // Skip to the next iteration
     }
+    printf("%d aquired a mortar and uses it\n", smoker);
+    sleep(1); // does thing
+    used_mortar = true;
+    omp_unset_lock(mortar_lock);
+    if (used_mortar) {
+      omp_lock_t* ignitor_lock = aquire(lignitors, IGNITORS_NUM);
+      if (ignitor_lock == NULL) {
+        printf("%d could not acquire an ignitor lock\n", smoker);
+        sleep(2);
+        continue; // Skip to the next iteration
+      }
+      printf("%d aquired an ignitor and uses it\n", smoker);
+      sleep(1); // ignites
+      ignited = true;
+      omp_unset_lock(ignitor_lock);
+    }
+    if (used_mortar && ignited) {
+#pragma omp critical
+      {
+        printf("\t\t%d smokes...\n", smoker);
+        sleep(2); // smokes
+      }
+    }
+  }
 
-    destroy_locks(lmortars, Lmortars);
-    destroy_locks(lignitors, Mignitors);
+  destroy_locks(lmortars, MORTARS_NUM);
+  destroy_locks(lignitors, IGNITORS_NUM);
+  printf("finished\n");
 }

@@ -1,4 +1,5 @@
 #include <omp.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -44,6 +45,7 @@ main(int argv, char** argc)
                        writeValue,
                        writingSpot);
             }
+            /*if (!omp_test_lock(&isWriting)) {printf("set");}*/
             omp_unset_lock(&isWriting);
         } else {
             if (!firstWrite) {
