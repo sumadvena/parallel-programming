@@ -1,0 +1,2 @@
+build:
+	gcc -o philosophers main.c -fopenmp -Wall -pedantic -std=c2x

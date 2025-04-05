@@ -10,27 +10,21 @@ const int SMOKERS_NUM = K;
 const int MORTARS_NUM = L;
 const int IGNITORS_NUM = M;
 
-void
-init_locks(omp_lock_t* lock, const int number)
-{
+void init_locks(omp_lock_t *lock, const int number) {
 #pragma omp parallel for num_threads(number)
   for (int i = 0; i < number; i++) {
     omp_init_lock(&lock[i]);
   }
 }
 
-void
-destroy_locks(omp_lock_t* lock, const int number)
-{
+void destroy_locks(omp_lock_t *lock, const int number) {
 #pragma omp parallel for num_threads(number)
   for (int i = 0; i < number; i++) {
     omp_destroy_lock(&lock[i]);
   }
 }
 
-omp_lock_t*
-aquire(omp_lock_t* lock, const int number)
-{
+omp_lock_t *aquire(omp_lock_t *lock, const int number) {
 
   for (int i = 0; i < number; i++) {
     if (omp_test_lock(&lock[i])) {
@@ -42,9 +36,8 @@ aquire(omp_lock_t* lock, const int number)
   return NULL;
 }
 
-int
-main(int argc, char** argv)
-{
+
+int main(int argc, char **argv) {
   omp_lock_t lmortars[MORTARS_NUM], lignitors[IGNITORS_NUM];
   init_locks(lmortars, MORTARS_NUM);
   init_locks(lignitors, IGNITORS_NUM);
@@ -53,10 +46,10 @@ main(int argc, char** argv)
 #pragma omp parallel for num_threads(SMOKERS_NUM) private(used_mortar, ignited)
   for (int i = 0; i < 50; i++) {
     int smoker = omp_get_thread_num();
-    omp_lock_t* mortar_lock = aquire(lmortars, MORTARS_NUM);
+    omp_lock_t *mortar_lock = aquire(lmortars, MORTARS_NUM);
     if (mortar_lock == NULL) {
       printf("%d could not acquire a mortar lock\n", smoker);
-      sleep(2);
+      sleep(1);
       continue; // Skip to the next iteration
     }
     printf("%d aquired a mortar and uses it\n", smoker);
@@ -64,10 +57,10 @@ main(int argc, char** argv)
     used_mortar = true;
     omp_unset_lock(mortar_lock);
     if (used_mortar) {
-      omp_lock_t* ignitor_lock = aquire(lignitors, IGNITORS_NUM);
+      omp_lock_t *ignitor_lock = aquire(lignitors, IGNITORS_NUM);
       if (ignitor_lock == NULL) {
         printf("%d could not acquire an ignitor lock\n", smoker);
-        sleep(2);
+      sleep(1);
         continue; // Skip to the next iteration
       }
       printf("%d aquired an ignitor and uses it\n", smoker);
