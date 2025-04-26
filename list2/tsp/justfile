@@ -1,0 +1,5 @@
+build:
+	gcc -o tsp main.c -fopenmp -Wall -pedantic -std=c2x
+	gcc -o tsp5 main5.c -fopenmp -Wall -pedantic -std=c2x
+	gcc -o tsp17 main17.c -fopenmp -Wall -pedantic -std=c2x
+	gcc -o tsp42 main42.c -fopenmp -Wall -pedantic -std=c2x
