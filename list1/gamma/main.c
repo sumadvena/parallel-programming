@@ -11,6 +11,7 @@ int main(int argc, char **argv) {
 #pragma omp parallel for reduction(+ : total_sum)
   for (int i = 1; i <= N; i++) {
     total_sum += 1.0 / i;
+    // fprintf(stdout, "Number of threads: %d\n", omp_get_num_threads());
   }
 
   total_sum -= log((double_t)N);
