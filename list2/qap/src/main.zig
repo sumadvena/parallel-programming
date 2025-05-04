@@ -56,10 +56,9 @@ fn addNextToMatrix(columnPtr: *u8, rowPtr: *u8, distance: bool, element: []const
     const number = try std.fmt.parseUnsigned(u8, element, 10);
     const col = columnPtr.*;
     const row = rowPtr.*;
-    if (distance == true) {
-        distanceMatrix[col][row] = number;
-    } else {
-        flowMatrix[col][row] = number;
+    switch (distance) {
+        true => distanceMatrix[col][row] = number,
+        false => flowMatrix[col][row] = number,
     }
     if (rowPtr.* == DIMENSION - 1) {
         if (columnPtr.* == DIMENSION - 1) {
