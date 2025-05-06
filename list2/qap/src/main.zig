@@ -1,7 +1,6 @@
 const std = @import("std");
 const stdout = std.io.getStdOut().writer();
 const Thread = std.Thread;
-const Pool = Thread.Pool;
 
 const PARENTS: u8 = 4;
 const CHILDREN: u8 = 3;
